@@ -1,2 +1,15 @@
 ---
 # defaults file for ansible-role-zabbix-agent
+
+zabbix_agent_version: 4.2
+zabbix_agent_pkg: "zabbix-agent"
+zabbix_agent_dependencies: []
+zabbix_agent_pkg_force: false
+zabbix_agent_sudo: []
+zabbix_agent_config: |
+  PidFile=/var/run/zabbix/zabbix_agentd.pid
+  LogFile=/var/log/zabbix/zabbix_agentd.log
+  Server=127.0.0.1
+  ServerActive=127.0.0.1
+  Hostname={{ inventory_hostname }}
+  Include=/etc/zabbix/zabbix_agentd.d/*.conf

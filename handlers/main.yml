@@ -1,2 +1,8 @@
 ---
 # handlers file for ansible-role-zabbix-agent
+
+- name: zabbix-agent restart
+  service:
+    name: zabbix-agent
+    state: restarted
+  become: yes

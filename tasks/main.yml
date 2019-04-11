@@ -1,2 +1,63 @@
 ---
 # tasks file for ansible-role-zabbix-agent
+
+- block:
+
+    - name: install gpg
+      apt:
+        name: gnupg
+        state: present
+        install_recommends: false
+
+    - name: install key
+      apt_key:
+        id: 79EA5ED4
+        url: http://repo.zabbix.com/zabbix-official-repo.key
+
+    - name: install repo
+      apt_repository:
+        repo: deb http://repo.zabbix.com/zabbix/{{ zabbix_agent_version }}/{{ ansible_distribution | lower }}/ {{ ansible_distribution_release }} main
+        state: present
+        update_cache: yes
+
+    - name: install pkg
+      apt:
+        name: "{{ zabbix_agent_dependencies + zabbix_agent_pkg is string | ternary([zabbix_agent_pkg], zabbix_agent_pkg) }}"
+        force: "{{ zabbix_agent_pkg_force }}"
+        state: present
+        install_recommends: false
+
+    - name: permissions to read logs
+      user:
+        name: zabbix
+        groups: adm
+        append: yes
+
+  become: true
+  tags:
+    - install
+    - zabbix
+    - zabbix-agent
+
+- block:
+
+    - name: setup sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^zabbix ALL\=\(ALL\) NOPASSWD:'
+        line: "zabbix ALL=(ALL) NOPASSWD: {{ zabbix_agent_sudo | join(', ') }}"
+        validate: 'visudo -cf %s'
+      when: zabbix_agent_sudo
+
+    - name: setup agent
+      template:
+        src: zabbix_agentd.conf.j2
+        dest: /etc/zabbix/zabbix_agentd.conf
+      notify: zabbix-agent restart
+
+  become: true
+  tags:
+    - setup
+    - zabbix
+    - zabbix-agent
